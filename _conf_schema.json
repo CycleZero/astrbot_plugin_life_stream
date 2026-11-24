@@ -23,6 +23,12 @@
     "default": 6,
     "hint": "超过这个数量当天不再主动发消息，防止刷屏。建议 4~8。"
   },
+  "archive_to_history": {
+    "description": "把主动消息写回对话历史",
+    "type": "bool",
+    "default": true,
+    "hint": "开启后，主动发出的消息会写进该会话的对话历史，后续聊天时模型才知道自己刚说过什么，避免前后矛盾。"
+  },
   "send_probability": {
     "description": "每个时间点的发送概率",
     "type": "float",
@@ -66,3 +72,4 @@
     "hint": "可用变量：{time} 时间点、{activity} 正在做的事、{date} 日期。"
   }
 }
+

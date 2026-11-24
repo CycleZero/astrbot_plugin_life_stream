@@ -13,7 +13,7 @@ desc: |
 
   命令：`/生活流` 查看状态，`/生活流 绑定` 绑定当前会话，`/生活流 现在` 立即生成一条试效果，
   `/生活流 重置` 清空当天记录，`/生活流 开启|关闭` 开关。
-version: 0.1.0
+version: 0.1.1
 author: CycleZero
 repo: https://github.com/CycleZero/astrbot_plugin_life_stream
 astrbot_version: ">=4.16,<5"
@@ -33,3 +33,4 @@ tags:
   - 人格
   - life_scheduler
   - 陪伴
+

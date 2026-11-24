@@ -314,7 +314,7 @@ class LifeStreamPlugin(Star):
             text = await self._compose_message(slot, now)
             if not text:
                 continue
-            sent = await self._broadcast(text, targets)
+            sent = await self._broadcast(text, targets, slot)
             if sent:
                 day["sent"] += 1
             if day["sent"] >= max(1, self._cfg_int("daily_limit", 6)):
@@ -391,7 +391,7 @@ class LifeStreamPlugin(Star):
             text = text[:120].rstrip() + "…"
         return text
 
-    async def _broadcast(self, text: str, targets: list[str]) -> int:
+    async def _broadcast(self, text: str, targets: list[str], slot: dict | None = None) -> int:
         try:
             from astrbot.api.event import MessageChain
         except Exception:  # noqa: BLE001
@@ -406,9 +406,50 @@ class LifeStreamPlugin(Star):
                 else:
                     sent += 1
                     logger.info("[生活流] 已发送到 %s：%s", umo, text)
+                    if slot is not None:
+                        await self._archive_to_history(umo, text, slot)
             except Exception as exc:  # noqa: BLE001
                 logger.warning("[生活流] 发送到 %s 失败：%s", umo, exc)
         return sent
+
+    async def _archive_to_history(self, umo: str, text: str, slot: dict) -> None:
+        """把主动消息写回对话历史。
+
+        `context.send_message` 只投递到平台，不会进入模型的对话上下文；
+        不补这一步，她下一轮就不知道自己刚说过什么，会出现"说在画画又改口
+        说在喝水"这种前后不一致。
+        """
+        if not self._cfg_bool("archive_to_history", True):
+            return
+        try:
+            from astrbot.core.agent.message import (
+                AssistantMessageSegment,
+                TextPart,
+                UserMessageSegment,
+            )
+
+            manager = getattr(self.context, "conversation_manager", None)
+            if manager is None:
+                return
+            cid = await manager.get_curr_conversation_id(umo)
+            if not cid:
+                cid = await manager.new_conversation(umo)
+            if not cid:
+                return
+            user_text = (
+                f"[生活流] 现在是 {slot['id']}，你正在：{slot['activity']}。"
+                "你主动发了一条消息。"
+            )
+            await manager.add_message_pair(
+                cid=cid,
+                user_message=UserMessageSegment(content=[TextPart(text=user_text)]),
+                assistant_message=AssistantMessageSegment(
+                    content=[TextPart(text=text)]
+                ),
+            )
+            logger.debug("[生活流] 已写入对话历史：%s", umo)
+        except Exception as exc:  # noqa: BLE001 - 归档失败不影响发送
+            logger.debug("[生活流] 写入对话历史失败：%s", exc)
 
     # ------------------------------------------------------------------ 命令
     @filter.permission_type(filter.PermissionType.ADMIN)
@@ -479,7 +520,7 @@ class LifeStreamPlugin(Star):
             umo = str(getattr(event, "unified_msg_origin", "") or "")
             if umo and umo not in targets:
                 targets = [umo]
-            sent = await self._broadcast(text, targets) if targets else 0
+            sent = await self._broadcast(text, targets, slot) if targets else 0
             yield event.plain_result(
                 f"当前时段：{slot['id']} {slot['activity']}\n生成内容：{text}\n已发送 {sent} 个会话。"
             )
@@ -520,3 +561,4 @@ class LifeStreamPlugin(Star):
                 save()
         except Exception as exc:  # noqa: BLE001
             logger.warning("[生活流] 保存配置 %s 失败：%s", key, exc)
+
