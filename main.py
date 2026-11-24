@@ -367,8 +367,17 @@ class LifeStreamPlugin(Star):
             logger.warning("[生活流] 生成消息失败：%s", exc)
             return ""
 
-        text = str(getattr(resp, "completion_text", "") or "").strip()
+        text = self._extract_text(resp)
         return self._clean_text(text)
+
+    @staticmethod
+    def _extract_text(resp: Any) -> str:
+        """兼容不同版本 LLMResponse 的文本字段。"""
+        for key in ("completion_text", "completion", "text", "content"):
+            value = getattr(resp, key, None)
+            if value:
+                return str(value).strip()
+        return str(resp or "").strip()
 
     @staticmethod
     def _clean_text(text: str) -> str:
