@@ -1,0 +1,68 @@
+{
+  "enabled": {
+    "description": "启用生活流",
+    "type": "bool",
+    "default": true,
+    "hint": "总开关。关闭后不再按日程主动发消息，命令仍然可用。"
+  },
+  "target_umos": {
+    "description": "目标会话",
+    "type": "list",
+    "default": [],
+    "hint": "主动消息发到这些会话。每行一个 unified_msg_origin，例如 aiocqhttp:FriendMessage:123456。也可以先用 /生活流 绑定 把当前会话加进来。"
+  },
+  "quiet_hours": {
+    "description": "免打扰时段",
+    "type": "string",
+    "default": "23:30-08:00",
+    "hint": "格式 HH:MM-HH:MM，支持跨零点。这段时间内不会主动发消息。"
+  },
+  "daily_limit": {
+    "description": "每日最多主动条数",
+    "type": "int",
+    "default": 6,
+    "hint": "超过这个数量当天不再主动发消息，防止刷屏。建议 4~8。"
+  },
+  "send_probability": {
+    "description": "每个时间点的发送概率",
+    "type": "float",
+    "default": 0.6,
+    "hint": "0~1。0.6 表示大约六成的时间点会说话，其余跳过，显得像真人。"
+  },
+  "max_delay_minutes": {
+    "description": "时间点后最大随机延迟（分钟）",
+    "type": "int",
+    "default": 25,
+    "hint": "日程写 19:00 吃饭，实际可能 19:17 才发。0 表示准时。"
+  },
+  "window_minutes": {
+    "description": "触发窗口（分钟）",
+    "type": "int",
+    "default": 10,
+    "hint": "时间点开始后多少分钟内算「这个时段」，配合随机延迟使用。"
+  },
+  "check_interval_seconds": {
+    "description": "检查间隔（秒）",
+    "type": "int",
+    "default": 60,
+    "hint": "每隔多久检查一次是否有时间点该触发了。不要小于 15 秒。"
+  },
+  "provider_id": {
+    "description": "生成消息使用的模型",
+    "type": "string",
+    "default": "",
+    "hint": "留空使用 AstrBot 当前默认对话模型；也可以填 provider ID。"
+  },
+  "llm_system_prompt": {
+    "description": "生成消息的系统提示词",
+    "type": "text",
+    "default": "你正在用手机 QQ 和人聊天。下面会给出一条你此刻正在做的事，请用你自己的口吻发一条很短的消息。\n要求：只输出消息本身，一到两句，不超过 30 字；不要解释、不要引号、不要 Markdown、不要写「摘要」或「补充」。",
+    "hint": "留空使用插件内置默认值。插件会自动把当前默认人格的系统提示词拼在前面。"
+  },
+  "message_prompt": {
+    "description": "生成消息的提示词模板",
+    "type": "text",
+    "default": "现在是 {time}，你正在：{activity}\n请按上面这条状态，给对方发一条很短的消息。",
+    "hint": "可用变量：{time} 时间点、{activity} 正在做的事、{date} 日期。"
+  }
+}
