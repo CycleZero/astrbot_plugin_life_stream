@@ -503,10 +503,17 @@ class LifeStreamPlugin(Star):
             schedule_text = await self._fetch_schedule_text()
             slots = self.parse_slots(schedule_text)
             now = datetime.now()
+            # 优先挑“当前时间落在区间内”的时段，否则退回最近已开始的时段
             slot = None
             for item in slots:
-                if item["start"] <= now.time():
+                if item["start"] <= now.time() and (
+                    item["end"] is None or now.time() < item["end"]
+                ):
                     slot = item
+            if slot is None:
+                for item in slots:
+                    if item["start"] <= now.time():
+                        slot = item
             if slot is None and slots:
                 slot = slots[0]
             if slot is None:
@@ -561,4 +568,5 @@ class LifeStreamPlugin(Star):
                 save()
         except Exception as exc:  # noqa: BLE001
             logger.warning("[生活流] 保存配置 %s 失败：%s", key, exc)
+
 
